@@ -19,6 +19,8 @@ import { estimateTokenLength } from "../utils/token";
 import { nanoid } from "nanoid";
 import { createPersistStore } from "../utils/store";
 
+import { updateTokenCount, getState } from "../statistics/globaltoken";
+
 export type ChatMessage = RequestMessage & {
   date: string;
   streaming?: boolean;
@@ -308,6 +310,15 @@ export const useChatStore = createPersistStore(
         } else {
           api = new ClientApi(ModelProvider.GPT);
         }
+
+        //统计发送字数
+        var tokenNums = 0;
+        for (let message of sendMessages) {
+          tokenNums = tokenNums + message.content.length;
+        }
+        await updateTokenCount(tokenNums);
+        const updatedState = getState();
+        console.log("Today token nums:", updatedState);
 
         // make request
         api.llm.chat({
